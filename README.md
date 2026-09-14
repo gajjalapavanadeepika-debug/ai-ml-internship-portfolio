@@ -7,4 +7,3 @@ AI and Machine Learning internships tasks and projects
 - **Data Types:** Converted correctly to numeric formats.
 - **Outliers:** Managed using Interquartile Range (IQR) capping.
 - **Feature Engineering:** Created a new feature `RoomsPerHousehold`.
--
