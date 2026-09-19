@@ -2,6 +2,9 @@ import cv2
 import mediapipe as mp
 import pyautogui
 
+# Disable PyAutoGUI fail-safe to prevent accidental interruptions
+pyautogui.FAILSAFE = False
+
 # Initialize MediaPipe Hands and OpenCV Video Capture
 mp_hands = mp.solutions.hands
 hands = mp_hands.Hands(max_num_hands=1, min_detection_confidence=0.7, min_tracking_confidence=0.7)
@@ -29,26 +32,34 @@ while cap.isOpened():
         for hand_landmarks in results.multi_hand_landmarks:
             mp_draw.draw_landmarks(image, hand_landmarks, mp_hands.HAND_CONNECTIONS)
             
-            # Get landmark coordinates for Index Finger Tip (ID 8) and Thumb Tip (ID 4)
             h, w, c = image.shape
             index_finger = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP]
             thumb_finger = hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP]
+            middle_finger = hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_TIP]
             
             x_index, y_index = int(index_finger.x * w), int(index_finger.y * h)
             x_thumb, y_thumb = int(thumb_finger.x * w), int(thumb_finger.y * h)
+            x_middle, y_middle = int(middle_finger.x * w), int(middle_finger.y * h)
             
-            # Map webcam coordinates to screen resolution for cursor movement
+            # 1. Cursor Movement (Index Finger)
             screen_x = int(index_finger.x * screen_width)
             screen_y = int(index_finger.y * screen_height)
-            
-            # Move mouse cursor
             pyautogui.moveTo(screen_x, screen_y)
             
-            # Calculate distance between thumb and index finger for clicking action
-            distance = ((x_thumb - x_index)**2 + (y_thumb - y_index)**2) ** 0.5
-            if distance < 35:
+            # 2. Click Trigger (Thumb & Index distance)
+            click_distance = ((x_thumb - x_index)**2 + (y_thumb - y_index)**2) ** 0.5
+            if click_distance < 35:
                 pyautogui.click()
-                pyautogui.sleep(0.2) # Prevent multiple rapid clicks
+                pyautogui.sleep(0.2)
+                
+            # 3. Scrolling Action (Thumb & Middle finger distance)
+            scroll_distance = ((x_thumb - x_middle)**2 + (y_thumb - y_middle)**2) ** 0.5
+            if scroll_distance < 30:
+                pyautogui.scroll(-40)  # Scroll down
+                pyautogui.sleep(0.1)
+            elif scroll_distance > 100:
+                pyautogui.scroll(40)   # Scroll up
+                pyautogui.sleep(0.1)
 
     # Display the webcam window
     cv2.imshow('AI Hand Gesture Computer Control', image)
